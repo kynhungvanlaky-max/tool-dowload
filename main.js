@@ -24,6 +24,40 @@ if (!fs.existsSync(defaultDownloadDir)) {
   fs.mkdirSync(defaultDownloadDir, { recursive: true });
 }
 
+// Thư mục lưu trữ extension bên ngoài ASAR để Chrome có thể đọc
+const externalExtensionPath = path.join(userDataPath, 'extension');
+
+function copyFolderSync(from, to) {
+  if (!fs.existsSync(to)) {
+    fs.mkdirSync(to, { recursive: true });
+  }
+  fs.readdirSync(from).forEach(element => {
+    const fromPath = path.join(from, element);
+    const toPath = path.join(to, element);
+    const stat = fs.lstatSync(fromPath);
+    if (stat.isFile()) {
+      fs.writeFileSync(toPath, fs.readFileSync(fromPath));
+    } else if (stat.isDirectory()) {
+      copyFolderSync(fromPath, toPath);
+    }
+  });
+}
+
+function setupExternalExtension() {
+  try {
+    const sourceExtensionPath = path.join(__dirname, 'extension');
+    if (fs.existsSync(sourceExtensionPath)) {
+      copyFolderSync(sourceExtensionPath, externalExtensionPath);
+      console.log('[MediaFetch] Đã đồng bộ extension ra thư mục AppData vật lý:', externalExtensionPath);
+    } else {
+      // Ở môi trường dev, nếu file chạy từ asar hoặc cấu trúc khác thì log cảnh báo
+      console.log('[MediaFetch] Không tìm thấy thư mục extension nguồn tại:', sourceExtensionPath);
+    }
+  } catch (error) {
+    console.error('[MediaFetch] Lỗi đồng bộ extension:', error);
+  }
+}
+
 // Khởi tạo SettingsManager
 settingsManager = new SettingsManager(settingsFilePath, defaultDownloadDir);
 
@@ -199,6 +233,9 @@ function migrateOldHistory(historyManager) {
 }
 
 app.whenReady().then(async () => {
+  // Đồng bộ extension ra ngoài ASAR để Chrome có thể nạp
+  setupExternalExtension();
+
   // Khởi tạo các manager
   historyManager = new HistoryManager(historyFilePath);
   
@@ -592,7 +629,7 @@ ipcMain.handle('open-folder-picker', async () => {
 });
 
 ipcMain.handle('open-extension-folder', async () => {
-  const extPath = path.join(__dirname, 'extension');
+  const extPath = externalExtensionPath;
   if (fs.existsSync(extPath)) {
     shell.openPath(extPath);
     return true;
@@ -616,7 +653,7 @@ ipcMain.handle('check-server-status', async () => {
 });
 
 ipcMain.handle('launch-chrome-ext', async () => {
-  const extPath = path.join(__dirname, 'extension');
+  const extPath = externalExtensionPath;
   const tempProfilePath = path.join(app.getPath('temp'), 'MediaFetchChromeProfile');
   const { exec } = require('child_process');
   return new Promise((resolve) => {
@@ -628,14 +665,14 @@ ipcMain.handle('launch-chrome-ext', async () => {
 });
 
 ipcMain.handle('copy-extension-path', async () => {
-  const extPath = path.join(__dirname, 'extension');
+  const extPath = externalExtensionPath;
   const { clipboard } = require('electron');
   clipboard.writeText(extPath);
   return true;
 });
 
 ipcMain.handle('create-chrome-shortcut', async () => {
-  const extPath = path.join(__dirname, 'extension');
+  const extPath = externalExtensionPath;
   
   // Các đường dẫn cài đặt mặc định của Chrome trên Windows
   const chromePaths = [
@@ -708,8 +745,8 @@ ipcMain.handle('install-chrome-ext-policy', async () => {
       });
     });
 
-    const extPath = path.join(__dirname, 'extension');
-    const projectDir = __dirname;
+    const extPath = externalExtensionPath;
+    const projectDir = app.getPath('userData');
     const pemPath = path.join(projectDir, 'extension.pem');
     const crxPath = path.join(projectDir, 'extension.crx');
     const xmlPath = path.join(projectDir, 'extension_update.xml');

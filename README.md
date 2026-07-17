@@ -4,15 +4,15 @@
 
 ---
 
-## ⚡ Cài đặt nhanh (Khuyên dùng cho người dùng cuối)
-Nếu bạn không muốn cài đặt Node.js hay chạy các dòng lệnh phức tạp, hãy sử dụng bản cài đặt đóng gói sẵn:
+## ⚡ Cài đặt nhanh (Tất cả trong một - Khuyên dùng)
+Ứng dụng và Tiện ích mở rộng đã được đóng gói tích hợp sẵn, giúp việc cài đặt trở nên vô cùng đơn giản:
 
-1.  **Tải ứng dụng Desktop**: Tải xuống file **`electron-downloader Setup 1.0.0.exe`** mới nhất tại phần **[Releases của GitHub](https://github.com/kynhungvanlaky-max/tool-dowload/releases)** và tiến hành cài đặt.
-2.  **Cài đặt Browser Extension**:
-    *   Tải file **`MediaFetch-Extension-v1.1.zip`** cũng ở phần Releases.
-    *   Giải nén tệp zip này ra một thư mục.
-    *   Mở Chrome, truy cập `chrome://extensions/`, bật **Developer mode** ở góc trên phải.
-    *   Nhấp **Load unpacked** (Tải tiện ích đã giải nén) và chọn thư mục vừa giải nén.
+1.  **Cài đặt ứng dụng Desktop**: Tải xuống file **`electron-downloader Setup 1.0.0.exe`** mới nhất tại phần **[Releases của GitHub](https://github.com/kynhungvanlaky-max/tool-dowload/releases)** và cài đặt lên máy tính.
+2.  **Khởi động ứng dụng**: Mở ứng dụng `MediaFetch` lên. Ứng dụng sẽ tự động giải nén thư mục Tiện ích mở rộng (Extension) vào thư mục dữ liệu nội bộ trên máy bạn.
+3.  **Nạp Extension vào trình duyệt**:
+    *   Mở trình duyệt Google Chrome, truy cập `chrome://extensions/` và bật **Developer mode** (Chế độ nhà phát triển) ở góc trên cùng bên phải.
+    *   Trên giao diện ứng dụng `MediaFetch` Desktop, di chuyển sang tab Cài đặt / Hướng dẫn, nhấn nút **Mở thư mục Extension** (hoặc **Copy đường dẫn Extension**).
+    *   Quay lại Chrome, nhấn nút **Load unpacked** (Tải tiện ích đã giải nén) và dán/chọn thư mục vừa mở là xong!
 
 ---
 
