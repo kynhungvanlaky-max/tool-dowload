@@ -4,6 +4,18 @@
 
 ---
 
+## ⚡ Cài đặt nhanh (Khuyên dùng cho người dùng cuối)
+Nếu bạn không muốn cài đặt Node.js hay chạy các dòng lệnh phức tạp, hãy sử dụng bản cài đặt đóng gói sẵn:
+
+1.  **Tải ứng dụng Desktop**: Tải xuống file **`electron-downloader Setup 1.0.0.exe`** mới nhất tại phần **[Releases của GitHub](https://github.com/kynhungvanlaky-max/tool-dowload/releases)** và tiến hành cài đặt.
+2.  **Cài đặt Browser Extension**:
+    *   Tải file **`MediaFetch-Extension-v1.1.zip`** cũng ở phần Releases.
+    *   Giải nén tệp zip này ra một thư mục.
+    *   Mở Chrome, truy cập `chrome://extensions/`, bật **Developer mode** ở góc trên phải.
+    *   Nhấp **Load unpacked** (Tải tiện ích đã giải nén) và chọn thư mục vừa giải nén.
+
+---
+
 ## 🚀 Tính năng nổi bật
 *   **Tải video lẻ / YouTube Playlist**: Hỗ trợ nhiều độ phân giải, tự động trộn hình ảnh và âm thanh chất lượng cao bằng engine `yt-dlp`.
 *   **Tải trọn bộ Spotify Album / Playlist**: Tự động quét metadata bài hát, tìm kiếm bản thu âm tốt nhất trên YouTube, tải về dạng nhạc MP3 chất lượng cao.
@@ -14,7 +26,7 @@
 
 ---
 
-## 🛠️ Yêu cầu hệ thống
+## 🛠️ Yêu cầu hệ thống (Chạy từ mã nguồn)
 1.  **Node.js** (Khuyên dùng v18 hoặc mới hơn).
 2.  **FFmpeg**: Cần có sẵn trong biến môi trường `PATH` của hệ thống để nhúng ảnh bìa và gộp video/audio chất lượng cao.
 
