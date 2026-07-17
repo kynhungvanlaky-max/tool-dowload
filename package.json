@@ -1,0 +1,28 @@
+{
+  "name": "electron-downloader",
+  "version": "1.0.0",
+  "description": "Ứng dụng tải video và audio từ link URL sử dụng Electron và yt-dlp",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "keywords": [
+    "downloader",
+    "electron",
+    "yt-dlp",
+    "video",
+    "audio"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fluent-ffmpeg": "^2.1.2",
+    "yt-dlp-wrap": "^2.1.1"
+  },
+  "devDependencies": {
+    "electron": "^43.1.1",
+    "electron-builder": "^26.15.3"
+  }
+}

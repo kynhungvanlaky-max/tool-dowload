@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <!-- CSP: Chỉ cho phép kết nối tới localhost:7788 (Desktop App) -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; connect-src http://localhost:7788; style-src 'self'; img-src 'self' data:;">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediaFetch Helper</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="header">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+      <span>MediaFetch Helper</span>
+    </div>
+    <div id="connection-status" class="status-indicator disconnected" title="Trạng thái kết nối với Desktop App">
+      Chưa kết nối App
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="current-page-info">
+      <span class="label">Trang hiện tại:</span>
+      <div id="page-title" class="page-title">Đang tải...</div>
+    </div>
+
+    <div class="links-section">
+      <div class="section-header">
+        <h3>Phát hiện liên kết media (<span id="links-count">0</span>)</h3>
+        <button id="btn-refresh" title="Làm mới danh sách">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div id="links-list" class="links-list">
+        <!-- Links sẽ tự động render ở đây -->
+        <div class="empty-list">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <p>Không phát hiện link video/audio nào trên trang này. Hãy thử play video để link xuất hiện.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <span class="version">v1.1 • Premium Glassmorphism</span>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

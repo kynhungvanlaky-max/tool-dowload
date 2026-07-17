@@ -1,0 +1,18 @@
+# Dependency directories
+node_modules/
+
+# Production / build outputs
+dist/
+*.zip
+*.crx
+*.pem
+
+# Local files & history
+history.json
+settings.json
+temp/
+.tempmediaStorage/
+
+# OS metadata
+.DS_Store
+Thumbs.db
