@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
   openFolderPicker: () => ipcRenderer.invoke('open-folder-picker'),
+  openFilePicker: (options) => ipcRenderer.invoke('open-file-picker', options),
   openExtensionFolder: () => ipcRenderer.invoke('open-extension-folder'),
   checkServerStatus: () => ipcRenderer.invoke('check-server-status'),
   launchChromeExt: () => ipcRenderer.invoke('launch-chrome-ext'),
@@ -22,10 +23,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
   createChromeShortcut: () => ipcRenderer.invoke('create-chrome-shortcut'),
   installChromeExtPolicy: () => ipcRenderer.invoke('install-chrome-ext-policy'),
   uninstallChromeExtPolicy: () => ipcRenderer.invoke('uninstall-chrome-ext-policy'),
+  getFailedLinks: () => ipcRenderer.invoke('get-failed-links'),
+  deleteFailedLink: (id) => ipcRenderer.invoke('delete-failed-link', id),
+  clearFailedLinks: () => ipcRenderer.invoke('clear-failed-links'),
+  exportFailedLinks: () => ipcRenderer.invoke('export-failed-links'),
+  openExternalUrl: (url) => ipcRenderer.invoke('open-external-url', url),
   
   // Listeners
   onDownloadProgress: (callback) => ipcRenderer.on('download-progress', (event, data) => callback(data)),
   onDownloadComplete: (callback) => ipcRenderer.on('download-complete', (event, data) => callback(data)),
   onDownloadError: (callback) => ipcRenderer.on('download-error', (event, data) => callback(data)),
-  onExternalLinkReceived: (callback) => ipcRenderer.on('external-link-received', (event, data) => callback(data))
+  onExternalLinkReceived: (callback) => ipcRenderer.on('external-link-received', (event, data) => callback(data)),
+  onSettingsUpdated: (callback) => ipcRenderer.on('settings-updated', (event, data) => callback(data)),
+  onFailedLinksUpdated: (callback) => ipcRenderer.on('failed-links-updated', (event, data) => callback(data)),
+  onCookieSynced: (callback) => ipcRenderer.on('cookie-synced', (event, data) => callback(data)),
+  onServerError: (callback) => ipcRenderer.on('server-error', (event, data) => callback(data)),
+  onServerStatus: (callback) => ipcRenderer.on('server-status', (event, data) => callback(data))
 });

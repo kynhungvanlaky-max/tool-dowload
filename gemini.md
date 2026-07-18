@@ -8,16 +8,16 @@ Chào Gemini! Đây là tài liệu ghi nhớ cấu trúc, cách thức hoạt �
 Dự án bao gồm hai phần chính: **Electron Desktop App** và **Chrome Browser Extension**.
 
 ### Desktop App (Electron + Node.js)
-- [main.js](file:///d:/Tooldowload/main.js): Entry point của Electron. Quản lý cửa sổ Browser, IPC communication và khởi chạy **Local HTTP Server ở cổng 7788** để nhận link gửi từ Browser Extension. Bổ sung IPC handler `start-album-download` để tải Album hàng loạt ngầm. Tích hợp quản lý gom nhóm tải xuống (`subItemToGroupMap`) và điều hướng cập nhật tiến trình hàng loạt.
-- [preload.js](file:///d:/Tooldowload/preload.js): Context Bridge chuyển tiếp các hàm và sự kiện an toàn sang UI, bao gồm sự kiện nhận link ngoài `onExternalLinkReceived` và API tải album `startAlbumDownload`.
-- [src/core/downloader.js](file:///d:/Tooldowload/src/core/downloader.js): Điều khiển yt-dlp binary. Tích hợp giải pháp giả lập chữ ký (`impersonate`), cấu hình JS Runtimes của hệ thống (`node`), bypass Cloudflare (`referer`) và tối ưu hóa phân tích video đơn lẻ (`--no-playlist`). Hỗ trợ tải vào thư mục con tùy biến `customDownloadDir` cho Album. Bổ sung cơ chế phân tích nhanh Playlist YouTube (`--flat-playlist`) và nhúng ID3 tag + ảnh bìa bằng FFmpeg. Nhận tham số `forceId` để định danh tải hàng loạt.
+- [main.js](file:///d:/Tooldowload/main.js): Entry point của Electron. Quản lý cửa sổ Browser, IPC communication và khởi chạy **Local HTTP Server ở cổng 7788** để nhận link gửi từ Browser Extension. Bổ sung IPC handler `start-album-download` để tải Album hàng loạt ngầm. Tích hợp quản lý gom nhóm tải xuống (`subItemToGroupMap`) và điều hướng cập nhật tiến trình hàng loạt. Nhận cookies từ extension qua endpoint `/receive-link` và lưu vào `global.memoryCookies`.
+- [preload.js](file:///d:/Tooldowload/preload.js): Context Bridge chuyển tiếp các hàm và sự kiện an toàn sang UI, bao gồm sự kiện nhận link ngoài `onExternalLinkReceived`, API tải album `startAlbumDownload` và sự kiện đồng bộ cookie `onCookieSynced`.
+- [src/core/downloader.js](file:///d:/Tooldowload/src/core/downloader.js): Điều khiển yt-dlp binary. Cấu hình JS Runtimes của hệ thống (`node`), bypass Cloudflare (`referer`) và tối ưu hóa phân tích video đơn lẻ (`--no-playlist`). Hỗ trợ tải vào thư mục con tùy biến `customDownloadDir` cho Album. Bổ sung cơ chế phân tích nhanh Playlist YouTube (`--flat-playlist`) và nhúng ID3 tag + ảnh bìa bằng FFmpeg. Nhận tham số `forceId` để định danh tải hàng loạt. **Cookie chỉ được lấy từ extension qua RAM (memoryCookies)**, không dùng `--cookies-from-browser` hay file cookies.txt.
 - [src/utils/spotifyScraper.js](file:///d:/Tooldowload/src/utils/spotifyScraper.js): Module cào thông tin metadata bài hát/album/playlist Spotify bằng cách giả lập User-Agent của Facebook Crawler (`facebookexternalhit/1.1`) nhằm bypass 100% chặn của Spotify Web Player.
 - [src/core/history.js](file:///d:/Tooldowload/src/core/history.js): Đọc/ghi lịch sử tải dạng JSON (`history.json`).
 - [src/renderer/](file:///d:/Tooldowload/src/renderer): Giao diện HTML/CSS/JS (Dark mode glassmorphism). Tự động hiển thị danh sách bài hát và cho phép tải trọn bộ Album Spotify về thư mục con riêng biệt. Sửa lỗi layout bị co bẹp thẻ lịch sử bằng `flex-shrink: 0`. Tích hợp vẽ Group Card lịch sử và Toggle trượt mở xem chi tiết các bài hát con.
 
 ### Browser Extension (Manifest V3)
-- [extension/manifest.json](file:///d:/Tooldowload/extension/manifest.json): Khai báo quyền `webRequest`, `storage`, `tabs` và host permission `<all_urls>`.
-- [extension/background.js](file:///d:/Tooldowload/extension/background.js): Lắng nghe `onBeforeRequest` để phát hiện và lọc các đường dẫn media thô (`.m3u8`, `.mp4`...). Đã loại bỏ `.ts` để tránh hiện tượng ngập rác danh sách phân đoạn con. Tích hợp bắt link gốc Spotify Web Player, hiển thị Badge số lượng link bắt được trên icon và dọn dẹp realtime.
+- [extension/manifest.json](file:///d:/Tooldowload/extension/manifest.json): Khai báo quyền `webRequest`, `storage`, `tabs`, `cookies` và host permission `<all_urls>`.
+- [extension/background.js](file:///d:/Tooldowload/extension/background.js): Lắng nghe `onBeforeRequest` để phát hiện và lọc các đường dẫn media thô (`.m3u8`, `.mp4`...). Đã loại bỏ `.ts` để tránh hiện tượng ngập rác danh sách phân đoạn con. Tích hợp bắt link gốc Spotify Web Player, hiển thị Badge số lượng link bắt được trên icon và dọn dẹp realtime. **Khi gửi link sang Desktop App, tự động lấy cookies thực tế từ tab qua `chrome.cookies.getAll()` và gửi kèm trong POST body.**
 - [extension/popup/](file:///d:/Tooldowload/extension/popup): Giao diện popup hiển thị link bắt được của tab hiện tại, hỗ trợ copy nhanh, đổi tên tệp nhanh và gửi link sang cổng 7788 của Desktop App. Tự động kiểm tra và bắt link trang hiện tại khi mở popup (Auto-Capture).
 
 ---
@@ -67,4 +67,19 @@ npm start
 4. **Lịch sử gom nhóm (Grouping)**:
    - Các subItems của group có thuộc tính `id` dạng `<groupId>_sub_<index>`. Khi tạm dừng, tiếp tục hoặc hủy, `main.js` cần lặp qua danh sách subItems này để gọi downloader core tương ứng.
 
+---
+
+## 5. Giải pháp Đồng bộ Cookie (Extension → RAM → Temp File)
+Để giải quyết triệt để lỗi YouTube chặn Bot (`Sign in to confirm you're not a bot`) và tránh hiện tượng xung đột khóa file dữ liệu (`Database Locked` khi đọc trực tiếp từ trình duyệt), dự án sử dụng cơ chế:
+
+- **Extension lấy cookies thực tế:** Khi người dùng gửi link, `extension/background.js` gọi `chrome.cookies.getAll({ url: pageUrl })` để lấy cookies thực từ tab hiện tại.
+- **Gửi kèm link:** Cookies được gửi trong POST body tới `/receive-link` của Desktop App.
+- **Đồng bộ về RAM:** Desktop app lưu cookies vào `global.memoryCookies` (Map<domain, cookies[]>).
+- **Tạo file tạm ngẫu nhiên:** Khi `yt-dlp` cần phân tích hoặc tải xuống, `downloader.js` lấy cookie từ RAM, tự động format định dạng Netscape (bao gồm tiền tố `#HttpOnly_` cho cookie HttpOnly) rồi ghi ra file tạm trong thư mục temp.
+- **Tự động dọn dẹp:** Sau khi tiến trình `yt-dlp` kết thúc (hoặc gặp lỗi), file cookie tạm thời được xóa ngay lập tức.
+- **Không dùng `--cookies-from-browser`:** Tránh lỗi database locked khi Chrome đang chạy.
+- **Không dùng file cookies.txt:** Đã xóa hoàn toàn khỏi UI và code.
+- **Luồng:** Extension → `chrome.cookies.getAll()` → POST `/receive-link` → `memoryCookies` → `_createTempCookieFile()` → `--cookies <temp_file>` → yt-dlp
+
 </RULE[GEMINI.md]>
+

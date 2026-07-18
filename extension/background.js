@@ -23,14 +23,14 @@ function isMajorPlatformVideo(url) {
     const parsed = new URL(url);
     const hostname = parsed.hostname;
     const pathname = parsed.pathname;
-    
+
     // 1. YouTube
     if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
       if (parsed.searchParams.has('v')) return true;
       if (pathname.includes('/shorts/') || pathname.includes('/live/') || pathname.includes('/v/') || pathname.includes('/embed/')) return true;
       return false;
     }
-    
+
     // 2. Facebook
     if (hostname.includes('facebook.com') || hostname.includes('fb.watch')) {
       if (pathname.includes('/watch') || pathname.includes('/reel/') || pathname.includes('/videos/') || pathname.includes('/posts/') || pathname.includes('story.php')) return true;
@@ -38,7 +38,7 @@ function isMajorPlatformVideo(url) {
       if (parsed.searchParams.has('v')) return true;
       return false;
     }
-    
+
     // 3. TikTok
     if (hostname.includes('tiktok.com')) {
       if (pathname.includes('/video/') || pathname.includes('/photo/')) return true;
@@ -50,8 +50,8 @@ function isMajorPlatformVideo(url) {
       if (pathname.includes('/track/') || pathname.includes('/album/') || pathname.includes('/playlist/')) return true;
       return false;
     }
-  } catch(e) {}
-  
+  } catch (e) { }
+
   return false;
 }
 
@@ -79,31 +79,31 @@ function handleUrlChange(tabId, url, title) {
       contentType: 'text/html',
       timestamp: Date.now()
     };
-    
+
     const update = {};
     update[`tab_${tabId}`] = [newLink];
     chrome.storage.local.set(update, () => {
       // Cập nhật badge số lượng là 1
       updateTabBadge(tabId, 1);
-      
+
       // Gửi tin nhắn realtime cho popup đang mở cập nhật giao diện
       chrome.runtime.sendMessage({
         action: 'links-updated',
         tabId: tabId,
         links: [newLink]
-      }).catch(() => {});
+      }).catch(() => { });
     });
   } else {
     // Trang web thông thường khác: Xóa sạch link cũ khi chuyển trang mới để chuẩn bị bắt các link stream mới
     chrome.storage.local.remove([`tab_${tabId}`], () => {
       // Cập nhật badge về trống
       updateTabBadge(tabId, 0);
-      
+
       chrome.runtime.sendMessage({
         action: 'links-updated',
         tabId: tabId,
         links: []
-      }).catch(() => {});
+      }).catch(() => { });
     });
   }
 }
@@ -127,17 +127,17 @@ chrome.webRequest.onHeadersReceived.addListener(
     if (details.method !== 'GET') return;
 
     const url = details.url;
-    
+
     // 1. Đối với YouTube, Facebook, TikTok, Spotify và các CDN của chúng: Bỏ qua các link nhỏ lẻ tẻ
     if (
-      isMajorPlatform(url) || 
-      url.includes('googlevideo.com') || 
-      url.includes('fbcdn.net') || 
+      isMajorPlatform(url) ||
+      url.includes('googlevideo.com') ||
+      url.includes('fbcdn.net') ||
       url.includes('tiktokcdn.com')
     ) {
       return;
     }
-    
+
     // Loại trừ các tệp tĩnh phổ biến để tối ưu hiệu năng
     if (url.match(/\.(png|jpg|jpeg|gif|css|js|woff|woff2|svg|json|ico|webp)(\?|$)/i)) return;
 
@@ -145,16 +145,16 @@ chrome.webRequest.onHeadersReceived.addListener(
     const contentTypeHeader = details.responseHeaders.find(
       h => h.name.toLowerCase() === 'content-type'
     );
-    
+
     let isMedia = false;
     let contentType = 'unknown';
 
     if (contentTypeHeader) {
       contentType = contentTypeHeader.value.toLowerCase();
-      
+
       // Kiểm tra Content-Type xem có phải video hoặc audio hay không
       if (
-        contentType.includes('application/x-mpegurl') || 
+        contentType.includes('application/x-mpegurl') ||
         contentType.includes('application/vnd.apple.mpegurl') || // HLS Stream (.m3u8)
         contentType.includes('application/dash+xml') ||          // DASH Stream (.mpd)
         contentType.includes('video/') ||                        // Video (mp4, webm, ts...)
@@ -180,7 +180,7 @@ chrome.webRequest.onHeadersReceived.addListener(
       // Lấy danh sách link hiện tại của tab từ storage
       chrome.storage.local.get([`tab_${tabId}`], (result) => {
         let links = result[`tab_${tabId}`] || [];
-        
+
         // Kiểm tra xem link này đã được lưu chưa
         if (!links.some(l => l.url === url)) {
           // Trích xuất tên file sạch đẹp từ URL
@@ -194,7 +194,7 @@ chrome.webRequest.onHeadersReceived.addListener(
             } else if (baseName) {
               name = decodeURIComponent(baseName);
             }
-          } catch(e) {}
+          } catch (e) { }
 
           links.push({
             url: url,
@@ -218,7 +218,7 @@ chrome.webRequest.onHeadersReceived.addListener(
     }
   },
   { urls: ["<all_urls>"] },
-  ["responseHeaders"]
+  ["responseHeaders", "extraHeaders"]
 );
 
 // Lắng nghe tin nhắn gửi từ Content Script hoặc Popup
@@ -226,33 +226,47 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'mediafetch-download') {
     const url = request.url;
     const pageUrl = sender.tab ? sender.tab.url : '';
-    
+
     console.log('Nhận yêu cầu tải từ content script:', url);
 
-    // Gửi yêu cầu sang Local HTTP Server của Desktop App ở cổng 7788
-    fetch('http://localhost:7788/receive-link', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        url: url,
-        pageUrl: pageUrl,
-        title: request.title || 'Video từ Trang Web'
+    // Lấy cookies thực tế từ tab hiện tại để gửi kèm (giải pháp đồng bộ cookie qua RAM)
+    (async () => {
+      let cookies = [];
+      try {
+        if (pageUrl) {
+          cookies = await chrome.cookies.getAll({ url: pageUrl });
+          console.log(`[MediaFetch] Đã lấy ${cookies.length} cookies từ tab:`, pageUrl);
+        }
+      } catch (e) {
+        console.warn('[MediaFetch] Không thể lấy cookies:', e.message);
+      }
+
+      // Gửi yêu cầu sang Local HTTP Server của Desktop App ở cổng 7788
+      fetch('http://localhost:7788/receive-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          url: url,
+          pageUrl: pageUrl,
+          title: request.title || 'Video từ Trang Web',
+          cookies: cookies  // Gửi kèm cookies để desktop app lưu vào RAM
+        })
       })
-    })
-    .then(res => res.json())
-    .then(data => {
-      sendResponse({ success: true, data });
-    })
-    .catch(err => {
-      console.error('Lỗi khi gửi link tải sang Desktop App:', err);
-      sendResponse({ success: false, error: err.message });
-    });
+        .then(res => res.json())
+        .then(data => {
+          sendResponse({ success: true, data });
+        })
+        .catch(err => {
+          console.error('Lỗi khi gửi link tải sang Desktop App:', err);
+          sendResponse({ success: false, error: err.message });
+        });
+    })();
 
     return true;
   }
-  
+
   // Nhận yêu cầu cập nhật Badge từ Popup
   if (request.action === 'update-badge') {
     updateTabBadge(request.tabId, request.count);
@@ -265,3 +279,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 chrome.tabs.onRemoved.addListener((tabId) => {
   chrome.storage.local.remove([`tab_${tabId}`]);
 });
+
+// Tự động kết nối tới Native Messaging Host để đánh thức Desktop App khi Chrome khởi động
+function wakeUpDesktopApp() {
+  try {
+    const port = chrome.runtime.connectNative('com.mediafetch.downloader');
+    port.onDisconnect.addListener(() => {
+      console.log('[MediaFetch SW] Đã ngắt kết nối đánh thức Desktop App');
+    });
+  } catch (e) {
+    console.warn('[MediaFetch SW] Không kết nối được Native Messaging (Chưa cài đặt hoặc bị tắt):', e.message);
+  }
+}
+
+// Gọi đánh thức khi Chrome bắt đầu khởi chạy
+chrome.runtime.onStartup.addListener(() => {
+  console.log('[MediaFetch SW] Chrome khởi chạy, đang đánh thức MediaFetch Desktop...');
+  wakeUpDesktopApp();
+});
+

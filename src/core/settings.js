@@ -17,7 +17,11 @@ class SettingsManager {
       videoQuality: 'bestvideo+bestaudio/best',
       audioFormat: 'bestaudio',
       accentColor: '#7c3aed',
-      showThumbnails: true
+      showThumbnails: true,
+      minimizeToTray: false,
+      startWithWindows: false,
+      startWithBrowser: false,
+      closeAction: 'ask'
     };
     this.ensureFileExists();
   }

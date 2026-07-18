@@ -434,6 +434,18 @@ body {
   color: #a78bfa;
 }
 
+.status-banner.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.status-banner.warning {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
 .status-banner.hidden {
   display: none;
 }
@@ -1479,3 +1491,25 @@ body {
     width: 100%;
   }
 }
+
+/* History List Grid Layout */
+.history-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  padding-top: 10px;
+}
+
+.history-list-grid .empty-history {
+  grid-column: 1 / -1;
+  padding: 60px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text-muted);
+  gap: 12px;
+  opacity: 0.6;
+}
+

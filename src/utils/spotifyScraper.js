@@ -44,12 +44,27 @@ function fetchHtml(url, userAgent = 'facebookexternalhit/1.1 (+http://www.facebo
 }
 
 /**
- * Helper trích xuất meta tag content từ HTML
+ * Chuyển đổi link Spotify thường sang link Embed
  */
-function getMeta(html, property) {
-  const regex = new RegExp(`<meta[^>]*property=["']${property}["'][^>]*content=["']([^"']*)["']`, 'i');
-  const match = html.match(regex);
-  return match ? match[1] : null;
+function getEmbedUrl(url) {
+  try {
+    const parsed = new URL(url);
+    const pathname = parsed.pathname;
+    
+    if (pathname.includes('/album/')) {
+      const match = pathname.match(/\/album\/([a-zA-Z0-9]+)/);
+      if (match) return `https://open.spotify.com/embed/album/${match[1]}`;
+    }
+    if (pathname.includes('/playlist/')) {
+      const match = pathname.match(/\/playlist\/([a-zA-Z0-9]+)/);
+      if (match) return `https://open.spotify.com/embed/playlist/${match[1]}`;
+    }
+    if (pathname.includes('/track/')) {
+      const match = pathname.match(/\/track\/([a-zA-Z0-9]+)/);
+      if (match) return `https://open.spotify.com/embed/track/${match[1]}`;
+    }
+  } catch (e) {}
+  return url;
 }
 
 /**
@@ -57,21 +72,43 @@ function getMeta(html, property) {
  */
 async function scrapeSpotify(url) {
   try {
-    const ua = 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_voiced.html)';
-    const html = await fetchHtml(url, ua);
+    const embedUrl = getEmbedUrl(url);
+    console.log(`[MediaFetch SpotifyScraper] Đang cào URL Embed: ${embedUrl}`);
+    const html = await fetchHtml(embedUrl);
     
-    const title = getMeta(html, 'og:title');
-    const description = getMeta(html, 'og:description');
-    const image = getMeta(html, 'og:image') || '';
+    const jsonScriptRegex = /<script\s+[^>]*type="application\/json"[^>]*>([\s\S]*?)<\/script>/gi;
+    let match;
+    let stateData = null;
 
-    if (!title) {
-      throw new Error('Không thể đọc tiêu đề từ trang Spotify.');
+    while ((match = jsonScriptRegex.exec(html)) !== null) {
+      try {
+        const parsed = JSON.parse(match[1]);
+        if (parsed.props?.pageProps?.state?.data?.entity) {
+          stateData = parsed.props.pageProps.state.data;
+          break;
+        }
+      } catch (e) {}
     }
 
-    // 1. Nếu là Link bài hát đơn lẻ (Track)
-    if (url.includes('/track/')) {
-      const parts = description ? description.split(' · ') : [];
-      const artist = parts[0] || 'N/A';
+    if (!stateData || !stateData.entity) {
+      throw new Error('Không thể tìm thấy hoặc phân tích dữ liệu JSON cấu trúc từ Spotify.');
+    }
+
+    const entity = stateData.entity;
+    const title = entity.title || entity.name || 'Không xác định';
+    
+    let image = '';
+    if (entity.visualIdentity?.image && entity.visualIdentity.image.length > 0) {
+      const images = entity.visualIdentity.image;
+      const largest = images.find(img => img.maxWidth === 640) || images[0];
+      image = largest.url;
+    }
+
+    if (entity.type === 'track') {
+      const artist = entity.artists && entity.artists.length > 0
+        ? entity.artists.map(a => a.name).join(', ')
+        : 'N/A';
+      
       return {
         type: 'track',
         title,
@@ -79,75 +116,30 @@ async function scrapeSpotify(url) {
         image,
         query: `${title} ${artist} Official Audio`
       };
-    }
-    
-    // 2. Nếu là Link Album hoặc Playlist
-    // Chỉ quét các track thực sự được định nghĩa trong thẻ <meta name="music:song" ...> ở phần <head>
-    // Điều này giúp loại bỏ 100% các bài hát đề xuất ở chân trang web
-    const trackRegex = /<meta[^>]*content=["']https:\/\/open\.spotify\.com\/track\/([a-zA-Z0-9]+)["']/gi;
-    let match;
-    const uniqueTrackIds = new Set();
-    while ((match = trackRegex.exec(html)) !== null) {
-      uniqueTrackIds.add(match[1]);
-    }
-
-    const trackIds = Array.from(uniqueTrackIds);
-    console.log(`Tìm thấy chính xác ${trackIds.length} bài hát trong Album/Playlist Spotify.`);
-
-    const tracks = [];
-    
-    // Fetch thông tin chi tiết từng bài hát theo nhóm (batch 6 bài một lúc) để tối ưu tốc độ và băng thông
-    const batchSize = 6;
-    for (let i = 0; i < trackIds.length; i += batchSize) {
-      const batch = trackIds.slice(i, i + batchSize);
-      const promises = batch.map(async (id) => {
-        try {
-          const trackUrl = `https://open.spotify.com/track/${id}`;
-          const trackHtml = await fetchHtml(trackUrl, ua);
-          const trackTitle = getMeta(trackHtml, 'og:title');
-          const trackDesc = getMeta(trackHtml, 'og:description');
-          const trackImage = getMeta(trackHtml, 'og:image') || ''; // Trích xuất ảnh bìa riêng của từng bài hát con
-          
-          if (trackTitle) {
-            const trackParts = trackDesc ? trackDesc.split(' · ') : [];
-            const trackArtist = trackParts[0] || 'N/A';
-            return {
-              title: trackTitle,
-              artist: trackArtist,
-              thumbnail: trackImage, // Lưu lại ảnh bìa riêng
-              query: `${trackTitle} ${trackArtist} Official Audio`
-            };
-          }
-        } catch (e) {
-          console.error(`Không thể cào thông tin track ${id}:`, e.message);
-        }
-        return null;
+    } else {
+      // Album hoặc Playlist
+      const artist = entity.subtitle || 'Spotify';
+      const tracks = (entity.trackList || []).map((t, idx) => {
+        const tTitle = t.title || 'Không tên';
+        const tArtist = t.subtitle || 'N/A';
+        const tUrl = t.uri ? `https://open.spotify.com/track/${t.uri.split(':').pop()}` : '';
+        return {
+          title: tTitle,
+          artist: tArtist,
+          thumbnail: image,
+          query: `${tTitle} ${tArtist} Official Audio`,
+          url: tUrl
+        };
       });
 
-      const results = await Promise.all(promises);
-      results.forEach(r => {
-        if (r) tracks.push(r);
-      });
+      return {
+        type: 'album',
+        title,
+        artist,
+        image,
+        tracks
+      };
     }
-
-    // Xác định tên nghệ sĩ của album từ description
-    let artist = 'Spotify';
-    if (description) {
-      const parts = description.split(' · ');
-      if (parts.length > 2) {
-        artist = parts[2]; // Đối với playlist/album cấu trúc thường là "... on Spotify · album · Artist · Year"
-      } else if (parts.length > 1) {
-        artist = parts[1];
-      }
-    }
-
-    return {
-      type: 'album',
-      title,
-      artist,
-      image,
-      tracks
-    };
   } catch (error) {
     console.error('Lỗi scraper Spotify:', error);
     throw new Error('Không thể phân tích dữ liệu từ link Spotify này: ' + error.message);

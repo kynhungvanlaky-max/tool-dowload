@@ -81,6 +81,8 @@ body {
   flex-direction: column;
   gap: 16px;
   flex: 1;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .current-page-info {
@@ -155,7 +157,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 310px;
+  max-height: 270px;
   overflow-y: auto;
   padding-right: 2px;
 }
@@ -345,4 +347,52 @@ body {
 .mediafetch-toast.show {
   transform: translate(-50%, 0);
   opacity: 1;
+}
+
+/* Sync Cookie Button Styles */
+.btn-sync-cookie {
+  background: rgba(137, 180, 250, 0.15);
+  border: 1px solid rgba(137, 180, 250, 0.25);
+  color: #89b4fa;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.btn-sync-cookie:hover {
+  background: rgba(137, 180, 250, 0.25);
+  border-color: rgba(137, 180, 250, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-sync-cookie:active {
+  transform: translateY(0);
+}
+
+.btn-sync-cookie.syncing {
+  background: rgba(166, 227, 161, 0.15);
+  border-color: rgba(166, 227, 161, 0.3);
+  color: var(--success-color);
+  pointer-events: none;
+}
+
+/* Page header and Sync Icon custom styles */
+.current-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.sync-cookie-icon {
+  margin-right: 4px;
+  display: inline-block;
 }

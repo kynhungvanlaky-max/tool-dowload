@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,14 +8,18 @@
   <!-- Nhúng font chữ Outfit và Inter từ Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="index.css">
 </head>
+
 <body>
   <!-- Custom Title Bar (dành cho titleBarStyle: 'hidden') -->
   <div class="custom-titlebar">
     <div class="titlebar-logo">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"
+        stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
         <polyline points="7 10 12 15 17 10"></polyline>
         <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -26,61 +31,61 @@
   </div>
 
   <div class="app-container">
-    <!-- Sidebar: Lịch sử tải -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <h2>Lịch sử tải xuống</h2>
-        <button id="btn-clear-history" title="Xóa toàn bộ lịch sử">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-        </button>
-      </div>
-      
-      <div id="history-list" class="history-list">
-        <!-- Lịch sử tải xuống sẽ render ở đây -->
-        <div class="empty-history">
-          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="17 8 12 3 7 8"></polyline>
-            <line x1="12" y1="3" x2="12" y2="15"></line>
-          </svg>
-          <p>Chưa có file tải xuống nào</p>
-        </div>
-      </div>
-    </aside>
-
     <!-- Main Content -->
     <main class="main-content">
       <!-- Tab Navigation Bar -->
       <nav class="main-nav">
         <button id="nav-home" class="nav-tab active">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
             <polyline points="9 22 9 12 15 12 15 22"></polyline>
           </svg>
           <span>Trang chủ</span>
         </button>
+        <button id="nav-history" class="nav-tab">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 8v4l3 3"></path>
+            <circle cx="12" cy="12" r="9"></circle>
+          </svg>
+          <span>Lịch sử</span>
+        </button>
+        <button id="nav-failed" class="nav-tab">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span>Lỗi Tải</span>
+        </button>
         <button id="nav-extension" class="nav-tab">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+            </path>
             <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
             <line x1="12" y1="22.08" x2="12" y2="12"></line>
           </svg>
           <span>Cài Extension</span>
         </button>
         <button id="nav-guide" class="nav-tab">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
             <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
           </svg>
           <span>Hướng dẫn</span>
         </button>
         <button id="nav-settings" class="nav-tab">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z">
+            </path>
           </svg>
           <span>Cài đặt</span>
         </button>
@@ -94,18 +99,31 @@
           <span id="binary-status-text">Đang chuẩn bị engine tải...</span>
         </div>
 
+        <!-- Trạng thái Local Server -->
+        <div id="server-status-banner" class="status-banner warning hidden">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span id="server-status-text">Cảnh báo Local Server</span>
+        </div>
+
         <!-- Ô nhập URL -->
         <section class="url-input-section">
           <h1>Tải Video & Audio từ mọi nơi</h1>
           <p class="subtitle">Hỗ trợ Youtube, Spotify, TikTok, Facebook và hàng ngàn website khác.</p>
-          
+
           <div class="input-group">
             <div class="input-wrapper">
-              <svg class="link-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg class="link-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
                 <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
               </svg>
-              <input type="text" id="url-input" placeholder="Dán liên kết video, playlist hoặc album Spotify tại đây..." autofocus autocomplete="off">
+              <input type="text" id="url-input" placeholder="Dán liên kết video, playlist hoặc album Spotify tại đây..."
+                autofocus autocomplete="off">
             </div>
             <button id="btn-analyze" class="btn-primary">
               <span>Phân tích</span>
@@ -125,7 +143,7 @@
               <div class="media-details">
                 <h3 id="media-title" class="media-title">Tiêu đề video</h3>
                 <p id="media-channel" class="media-channel">Kênh / Tác giả</p>
-                
+
                 <!-- 1. Tùy chọn tải video/audio lẻ thông thường -->
                 <div id="single-download-options" class="download-options">
                   <div class="tabs">
@@ -142,7 +160,8 @@
 
                   <div class="action-row">
                     <button id="btn-download" class="btn-success">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -154,8 +173,9 @@
 
                 <!-- 2. Tùy chọn tải Album/Playlist Spotify hoặc YouTube Playlist hàng loạt (mặc định ẩn) -->
                 <div id="album-download-options" class="download-options hidden">
-                  <p id="album-desc-text" class="album-desc">Phát hiện Album / Playlist. Bạn có thể tải toàn bộ danh sách bài hát bên dưới.</p>
-                  
+                  <p id="album-desc-text" class="album-desc">Phát hiện Album / Playlist. Bạn có thể tải toàn bộ danh
+                    sách bài hát bên dưới.</p>
+
                   <!-- Chọn chất lượng cho YouTube Playlist -->
                   <div id="playlist-quality-wrapper" class="select-wrapper hidden">
                     <label for="playlist-quality-select">Độ phân giải tải xuống Playlist:</label>
@@ -171,7 +191,8 @@
 
                   <div class="action-row">
                     <button id="btn-download-album" class="btn-success-gradient">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -198,7 +219,7 @@
             </div>
           </div>
         </section>
-        
+
         <!-- Giới thiệu các trang hỗ trợ -->
         <section class="intro-section">
           <h3>Lưu ý sử dụng</h3>
@@ -211,7 +232,8 @@
             <div class="info-card">
               <div class="info-icon">🎵</div>
               <h4>Hỗ trợ Spotify</h4>
-              <p>Tự động bóc tách link Spotify (track/album/playlist), tìm kiếm thông minh và tải MP3 hàng loạt từ YouTube.</p>
+              <p>Tự động bóc tách link Spotify (track/album/playlist), tìm kiếm thông minh và tải MP3 hàng loạt từ
+                YouTube.</p>
             </div>
             <div class="info-card">
               <div class="info-icon">💾</div>
@@ -222,11 +244,86 @@
         </section>
       </div>
 
+      <!-- 5. SECTION LỊCH SỬ (HISTORY SECTION) -->
+      <div id="section-history" class="tab-section hidden">
+        <section class="config-panel">
+          <div class="settings-header-row">
+            <h2>Lịch sử tải xuống</h2>
+            <button id="btn-clear-history" title="Xóa toàn bộ lịch sử">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
+          <p class="subtitle">Quản lý và xem tiến trình của các tệp tin đang tải xuống hoặc đã tải hoàn tất.</p>
+
+          <div id="history-list" class="history-list-grid">
+            <!-- Lịch sử tải xuống sẽ render ở đây -->
+            <div class="empty-history">
+              <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              <p>Chưa có file tải xuống nào</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- 6. SECTION LỖI TẢI (FAILED SECTION) -->
+      <div id="section-failed" class="tab-section hidden">
+        <section class="config-panel">
+          <div class="settings-header-row">
+            <h2>Liên kết tải xuống bị lỗi</h2>
+            <div style="display: flex; gap: 10px;">
+              <button id="btn-export-failed" class="btn-secondary" title="Xuất danh sách URL lỗi ra file text"
+                style="display: flex; align-items: center; gap: 8px; border-color: var(--border-glass); background: rgba(255, 255, 255, 0.03); padding: 8px 14px; border-radius: 8px; color: var(--text-main); cursor: pointer;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span>Xuất file Log</span>
+              </button>
+              <button id="btn-clear-failed" class="btn-secondary" title="Xóa danh sách liên kết lỗi"
+                style="display: flex; align-items: center; gap: 8px; border-color: rgba(244, 63, 94, 0.4); color: #f43f5e; background: rgba(244, 63, 94, 0.05); padding: 8px 14px; border-radius: 8px; cursor: pointer;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                <span>Xóa hết</span>
+              </button>
+            </div>
+          </div>
+          <p class="subtitle">Danh sách các bài hát hoặc video bị lỗi khi tải về. Bạn có thể sao chép liên kết gốc hoặc
+            xuất ra file text để phân tích.</p>
+
+          <div id="failed-list" class="history-list-grid">
+            <!-- Liên kết lỗi sẽ được render ở đây -->
+            <div class="empty-history">
+              <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M8 12h8"></path>
+              </svg>
+              <p>Tuyệt vời! Không có lỗi tải xuống nào.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
       <!-- 2. SECTION CÀI ĐẶT EXTENSION (EXTENSION SECTION) -->
       <div id="section-extension" class="tab-section hidden">
         <section class="config-panel">
           <h2>Cài đặt Browser Extension</h2>
-          <p class="subtitle">MediaFetch Helper cho phép bạn chuyển tiếp đường link trực tiếp khi đang nghe nhạc trên Spotify, Youtube, Facebook hoặc TikTok.</p>
+          <p class="subtitle">MediaFetch Helper cho phép bạn chuyển tiếp đường link trực tiếp khi đang nghe nhạc trên
+            Spotify, Youtube, Facebook hoặc TikTok.</p>
 
           <div class="connection-status-card" id="connection-checker-card">
             <div class="status-indicator-wrapper">
@@ -243,9 +340,13 @@
             <h4>⚡ Tự động nạp & Cài đặt Chrome</h4>
             <p>Chọn một trong các giải pháp tự động bên dưới để cài tiện ích mở rộng vào Google Chrome:</p>
             <div class="auto-buttons-row">
-              <button id="btn-install-policy" class="btn-success" disabled style="opacity: 0.6; cursor: not-allowed; filter: grayscale(1);">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              <button id="btn-install-policy" class="btn-success" disabled
+                style="opacity: 0.6; cursor: not-allowed; filter: grayscale(1);">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path
+                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                  </path>
                   <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                   <line x1="12" y1="22.08" x2="12" y2="12"></line>
                 </svg>
@@ -253,13 +354,15 @@
               </button>
 
               <button id="btn-copy-ext-path" class="btn-secondary">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
                   <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                   <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
                 </svg>
                 <span>Copy đường dẫn Extension</span>
               </button>
-              <button id="btn-uninstall-policy" class="btn-danger" style="background: rgba(243, 139, 168, 0.1); border: 1px solid rgba(243, 139, 168, 0.3); color: #f38ba8;">
+              <button id="btn-uninstall-policy" class="btn-danger"
+                style="background: rgba(243, 139, 168, 0.1); border: 1px solid rgba(243, 139, 168, 0.3); color: #f38ba8;">
                 Gỡ khỏi Chrome
               </button>
             </div>
@@ -272,9 +375,11 @@
                 <div class="step-badge">1</div>
                 <div class="step-content">
                   <h4>Mở thư mục Extension trên máy tính</h4>
-                  <p>Extension đi kèm mã nguồn của ứng dụng. Nhấn nút bên dưới để mở thư mục chứa extension trên Explorer của bạn.</p>
+                  <p>Extension đi kèm mã nguồn của ứng dụng. Nhấn nút bên dưới để mở thư mục chứa extension trên
+                    Explorer của bạn.</p>
                   <button id="btn-open-ext-folder" class="btn-primary btn-sm">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
                       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                     </svg>
                     <span>Mở thư mục Extension</span>
@@ -286,7 +391,9 @@
                 <div class="step-badge">2</div>
                 <div class="step-content">
                   <h4>Truy cập trang Quản lý tiện ích mở rộng</h4>
-                  <p>Mở trình duyệt Google Chrome (hoặc trình duyệt Chromium khác), gõ vào thanh địa chỉ: <code>chrome://extensions/</code> và nhấn Enter.</p>
+                  <p>Mở trình duyệt Google Chrome (hoặc trình duyệt Chromium khác), gõ vào thanh địa chỉ:
+                    <code>chrome://extensions/</code> và nhấn Enter.
+                  </p>
                 </div>
               </div>
 
@@ -294,7 +401,8 @@
                 <div class="step-badge">3</div>
                 <div class="step-content">
                   <h4>Bật "Chế độ dành cho nhà phát triển" (Developer Mode)</h4>
-                  <p>Tìm công tắc gạt <strong>Developer mode</strong> ở góc trên cùng bên phải màn hình và bật nó lên.</p>
+                  <p>Tìm công tắc gạt <strong>Developer mode</strong> ở góc trên cùng bên phải màn hình và bật nó lên.
+                  </p>
                 </div>
               </div>
 
@@ -302,7 +410,9 @@
                 <div class="step-badge">4</div>
                 <div class="step-content">
                   <h4>Tải tiện ích đã giải nén (Load Unpacked)</h4>
-                  <p>Nhấp vào nút <strong>Load unpacked (Tải tiện ích đã giải nén)</strong> xuất hiện ở góc trên bên trái trình duyệt, sau đó trỏ đến và chọn đúng thư mục <code>extension</code> vừa được mở ở Bước 1.</p>
+                  <p>Nhấp vào nút <strong>Load unpacked (Tải tiện ích đã giải nén)</strong> xuất hiện ở góc trên bên
+                    trái trình duyệt, sau đó trỏ đến và chọn đúng thư mục <code>extension</code> vừa được mở ở Bước 1.
+                  </p>
                 </div>
               </div>
             </div>
@@ -320,27 +430,34 @@
             <div class="guide-card">
               <div class="guide-card-icon">🔗</div>
               <h3>Cách 1: Tải trực tiếp bằng link</h3>
-              <p>Bạn copy địa chỉ URL của video lẻ, YouTube Playlist hoặc Spotify Album/Playlist. Dán vào ô nhập link ở Trang chủ, nhấn <strong>Phân tích</strong> rồi lựa chọn chất lượng để tải về máy.</p>
+              <p>Bạn copy địa chỉ URL của video lẻ, YouTube Playlist hoặc Spotify Album/Playlist. Dán vào ô nhập link ở
+                Trang chủ, nhấn <strong>Phân tích</strong> rồi lựa chọn chất lượng để tải về máy.</p>
             </div>
 
             <div class="guide-card">
               <div class="guide-card-icon">⚡</div>
               <h3>Cách 2: Đẩy tự động từ Browser Extension</h3>
-              <p>Khi lướt Web Player trên trình duyệt Chrome, extension MediaFetch Helper sẽ tự động theo dõi và bắt liên kết gốc (badge số màu xanh trên icon Extension sẽ tăng lên).</p>
-              <p>Bạn chỉ cần click vào icon Extension và bấm vào nút <strong>Gửi sang Desktop App (Mũi tên)</strong>. Ứng dụng sẽ tự động mở rộng và bắt đầu phân tích tải ngay lập tức!</p>
+              <p>Khi lướt Web Player trên trình duyệt Chrome, extension MediaFetch Helper sẽ tự động theo dõi và bắt
+                liên kết gốc (badge số màu xanh trên icon Extension sẽ tăng lên).</p>
+              <p>Bạn chỉ cần click vào icon Extension và bấm vào nút <strong>Gửi sang Desktop App (Mũi tên)</strong>.
+                Ứng dụng sẽ tự động mở rộng và bắt đầu phân tích tải ngay lập tức!</p>
             </div>
 
             <div class="guide-card">
               <div class="guide-card-icon">📝</div>
               <h3>Cách 3: Đẩy thủ công từ Extension</h3>
-              <p>Nếu vì lý do bảo mật hoặc cổng kết nối bị chặn mà nút gửi tự động không đẩy được link sang App, bạn có thể bấm nút **Copy** kế bên đường link trong popup Extension, quay lại Trang chủ của App để dán thủ công và nhấn Phân tích.</p>
+              <p>Nếu vì lý do bảo mật hoặc cổng kết nối bị chặn mà nút gửi tự động không đẩy được link sang App, bạn có
+                thể bấm nút **Copy** kế bên đường link trong popup Extension, quay lại Trang chủ của App để dán thủ công
+                và nhấn Phân tích.</p>
             </div>
 
             <div class="guide-card">
               <div class="guide-card-icon">🎵</div>
               <h3>Đặc quyền Spotify & ID3 tag</h3>
-              <p>Khi bạn dán link Spotify Album/Playlist, ứng dụng sẽ sử dụng thuật toán cào metadata và tìm kiếm bản thu âm tốt nhất trên YouTube để tải về dạng audio MP3 chất lượng cao.</p>
-              <p>Đồng thời, ứng dụng sẽ tự động nhúng tag ID3: Tên bài hát, Nghệ sĩ, Album, Thứ tự Track và **nhúng sẵn ảnh bìa Album Cover Art** trực tiếp vào file nhạc bằng engine FFmpeg.</p>
+              <p>Khi bạn dán link Spotify Album/Playlist, ứng dụng sẽ sử dụng thuật toán cào metadata và tìm kiếm bản
+                thu âm tốt nhất trên YouTube để tải về dạng audio MP3 chất lượng cao.</p>
+              <p>Đồng thời, ứng dụng sẽ tự động nhúng tag ID3: Tên bài hát, Nghệ sĩ, Album, Thứ tự Track và **nhúng sẵn
+                ảnh bìa Album Cover Art** trực tiếp vào file nhạc bằng engine FFmpeg.</p>
             </div>
           </div>
         </section>
@@ -359,7 +476,7 @@
             <!-- Nhóm: Lưu trữ -->
             <div class="settings-group">
               <h3>📁 Lưu trữ & Thư mục</h3>
-              
+
               <div class="settings-row">
                 <div class="settings-info">
                   <label>Thư mục lưu file mặc định</label>
@@ -368,7 +485,8 @@
                 <div class="settings-control folder-picker-wrapper">
                   <input type="text" id="setting-download-dir" readonly>
                   <button id="btn-browse-folder" class="btn-secondary btn-icon-only" title="Chọn thư mục lưu file">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
                       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                     </svg>
                   </button>
@@ -392,11 +510,12 @@
             <!-- Nhóm: Tốc độ và giới hạn -->
             <div class="settings-group">
               <h3>⚡ Tốc độ & Giới hạn tải</h3>
-              
+
               <div class="settings-row">
                 <div class="settings-info">
                   <label>Giới hạn tốc độ tải tối đa</label>
-                  <span class="settings-desc">Giới hạn băng thông tải xuống của yt-dlp để tránh nghẽn mạng gia đình.</span>
+                  <span class="settings-desc">Giới hạn băng thông tải xuống của yt-dlp để tránh nghẽn mạng gia
+                    đình.</span>
                 </div>
                 <div class="settings-control">
                   <select id="setting-rate-limit" class="settings-select">
@@ -412,7 +531,8 @@
               <div class="settings-row">
                 <div class="settings-info">
                   <label>Khoảng nghỉ giữa các bài trong Album</label>
-                  <span class="settings-desc">Khoảng nghỉ (mili-giây) khi tải tuần tự các bài trong Album để tránh bị chặn IP.</span>
+                  <span class="settings-desc">Khoảng nghỉ (mili-giây) khi tải tuần tự các bài trong Album để tránh bị
+                    chặn IP.</span>
                 </div>
                 <div class="settings-control">
                   <select id="setting-album-delay" class="settings-select">
@@ -423,6 +543,9 @@
                   </select>
                 </div>
               </div>
+
+              <!-- Extension tự động đồng bộ cookies qua RAM - không cần cấu hình thêm -->
+
             </div>
 
             <!-- Nhóm: Tương tác Extension -->
@@ -432,17 +555,20 @@
               <div class="settings-row">
                 <div class="settings-info">
                   <label>Cổng Local Server nhận link</label>
-                  <span class="settings-desc">Cổng kết nối lắng nghe link từ Extension (Mặc định: 7788). Cần trùng khớp với cấu hình trong Extension.</span>
+                  <span class="settings-desc">Cổng kết nối lắng nghe link từ Extension (Mặc định: 7788). Cần trùng khớp
+                    với cấu hình trong Extension.</span>
                 </div>
                 <div class="settings-control">
-                  <input type="number" id="setting-port" class="settings-input-num" min="1024" max="65535" placeholder="7788">
+                  <input type="number" id="setting-port" class="settings-input-num" min="1024" max="65535"
+                    placeholder="7788">
                 </div>
               </div>
 
               <div class="settings-row">
                 <div class="settings-info">
                   <label>Tự động Focus cửa sổ khi nhận link</label>
-                  <span class="settings-desc">Tự động hiện cửa sổ ứng dụng lên trên cùng khi bạn click gửi link từ trình duyệt.</span>
+                  <span class="settings-desc">Tự động hiện cửa sổ ứng dụng lên trên cùng khi bạn click gửi link từ trình
+                    duyệt.</span>
                 </div>
                 <div class="settings-control">
                   <label class="switch">
@@ -455,11 +581,57 @@
               <div class="settings-row">
                 <div class="settings-info">
                   <label>Tự động Phân tích link nhận được</label>
-                  <span class="settings-desc">Tự động quét thông tin video ngay khi link được gửi sang mà không cần ấn nút Phân tích.</span>
+                  <span class="settings-desc">Tự động quét thông tin video ngay khi link được gửi sang mà không cần ấn
+                    nút Phân tích.</span>
                 </div>
                 <div class="settings-control">
                   <label class="switch">
                     <input type="checkbox" id="setting-autoanalyze">
+                    <span class="slider-round"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Nhóm: Hệ thống & Chạy ngầm -->
+            <div class="settings-group">
+              <h3>⚙️ Hệ thống & Chạy ngầm</h3>
+
+              <div class="settings-row">
+                <div class="settings-info">
+                  <label>Hành động khi đóng cửa sổ [X]</label>
+                  <span class="settings-desc">Lựa chọn hành vi khi click nút đóng cửa sổ.</span>
+                </div>
+                <div class="settings-control">
+                  <select id="setting-close-action" class="settings-select">
+                    <option value="ask">Hỏi tôi mỗi lần đóng</option>
+                    <option value="tray">Chạy ẩn ở khay hệ thống (Tray)</option>
+                    <option value="exit">Thoát hoàn toàn ứng dụng</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-info">
+                  <label>Khởi động cùng Windows</label>
+                  <span class="settings-desc">Tự động khởi chạy ứng dụng ẩn ở khay hệ thống khi bật máy tính.</span>
+                </div>
+                <div class="settings-control">
+                  <label class="switch">
+                    <input type="checkbox" id="setting-start-with-windows">
+                    <span class="slider-round"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-info">
+                  <label>Khởi động cùng Chrome</label>
+                  <span class="settings-desc">Tự động chạy ứng dụng ẩn dưới khay hệ thống khi mở Google Chrome.</span>
+                </div>
+                <div class="settings-control">
+                  <label class="switch">
+                    <input type="checkbox" id="setting-start-with-browser">
                     <span class="slider-round"></span>
                   </label>
                 </div>
@@ -484,7 +656,8 @@
               <div class="settings-row">
                 <div class="settings-info">
                   <label>Hiển thị ảnh thumbnail lịch sử</label>
-                  <span class="settings-desc">Bật/tắt hiển thị ảnh nhỏ (cover) của video/nhạc trong lịch sử tải để tiết kiệm ram.</span>
+                  <span class="settings-desc">Bật/tắt hiển thị ảnh nhỏ (cover) của video/nhạc trong lịch sử tải để tiết
+                    kiệm ram.</span>
                 </div>
                 <div class="settings-control">
                   <label class="switch">
@@ -501,4 +674,5 @@
 
   <script src="renderer.js"></script>
 </body>
+
 </html>

@@ -16,3 +16,7 @@ temp/
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Test outputs
+history_test.json
+Downloads_Test/

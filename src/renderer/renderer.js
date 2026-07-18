@@ -31,6 +31,7 @@ const albumDescText = document.getElementById('album-desc-text');
 let analyzedData = null; // Lưu trữ dữ liệu phân tích hiện tại
 let currentTab = 'video'; // 'video' hoặc 'audio'
 let currentReferer = ''; // Lưu referer của link để bypass Cloudflare
+const expandedGroupIds = new Set(); // Lưu ID các Group đang được mở rộng chi tiết
 
 // ─── Debounce History Re-render ───────────────────────────────────────────
 // Khi tải album nhiều bài đồng thời, tương tác này đảm bảo render tối đa 1 lần/frame (60fps)
@@ -49,7 +50,7 @@ function scheduleHistoryRender() {
 // Khi load app xong
 document.addEventListener('DOMContentLoaded', () => {
   loadHistory();
-  
+
   // Tự động nhận diện thay đổi trạng thái binary từ Main
   if (window.electronAPI.onBinaryStatus) {
     window.electronAPI.onBinaryStatus((data) => {
@@ -129,7 +130,7 @@ async function analyzeUrl() {
   btnAnalyze.disabled = true;
   const originalText = btnAnalyze.innerText;
   btnAnalyze.innerText = 'Đang quét...';
-  
+
   analysisPanel.classList.add('hidden');
   albumTracksContainer.classList.add('hidden');
   albumDownloadOptions.classList.add('hidden');
@@ -150,7 +151,6 @@ async function analyzeUrl() {
 
       if (res.isAlbum) {
         // TẢI HÀNG LOẠT (Spotify Album/Playlist hoặc YouTube Playlist)
-        albumTracksCount.innerText = res.tracks.length;
         albumDescText.innerText = `Phát hiện ${res.isPlaylist ? 'Playlist YouTube' : 'Album Spotify'}. Bạn có thể tùy chọn chất lượng hoặc click tải toàn bộ về thư mục con riêng biệt.`;
         albumDownloadOptions.classList.remove('hidden');
 
@@ -162,6 +162,9 @@ async function analyzeUrl() {
         }
 
         renderAlbumTracks(res.tracks, res.isPlaylist);
+        if (res.isPlaylist) {
+          playlistQualitySelect.dispatchEvent(new Event('change'));
+        }
         albumTracksContainer.classList.remove('hidden');
       } else {
         // TẢI LẺ 1 VIDEO/AUDIO THÔNG THƯỜNG
@@ -190,7 +193,7 @@ function renderFormats(formats) {
   // Lọc định dạng theo tab đang chọn (video/audio)
   const isAudioTab = currentTab === 'audio';
   let filtered = formats;
-  
+
   if (isAudioTab) {
     filtered = [{
       id: 'bestaudio',
@@ -211,7 +214,7 @@ function renderFormats(formats) {
 // Render danh sách các bài hát trong Album / Playlist lên UI
 function renderAlbumTracks(tracks, isPlaylist) {
   albumTracksList.innerHTML = '';
-  
+
   // Đặt lại checkbox Chọn tất cả là checked khi render danh sách mới
   if (selectAllTracks) {
     selectAllTracks.checked = true;
@@ -222,17 +225,17 @@ function renderAlbumTracks(tracks, isPlaylist) {
     item.className = 'album-track-item';
 
     let qualitySelectHtml = '';
-    
+
     // Nếu là Playlist YouTube, cho phép chọn chất lượng định dạng chi tiết riêng từng video
     if (isPlaylist) {
       const formats = track.formats || [];
       qualitySelectHtml = `
         <select class="track-quality-select" data-index="${index}">
           ${formats.map(f => {
-            const isAudio = f.id === 'bestaudio';
-            const sizeLabel = f.size ? `- ${f.size}` : '';
-            return `<option value="${f.id}" data-height="${f.height || ''}" data-isaudio="${isAudio}">${f.resolution} (${f.ext.toUpperCase()}) ${sizeLabel}</option>`;
-          }).join('')}
+        const isAudio = f.id === 'bestaudio';
+        const sizeLabel = f.size ? `- ${f.size}` : '';
+        return `<option value="${f.id}" data-height="${f.height || ''}" data-isaudio="${isAudio}">${f.resolution} (${f.ext.toUpperCase()}) ${sizeLabel}</option>`;
+      }).join('')}
           ${formats.length === 0 ? '<option value="bestvideo+bestaudio/best">Tốt nhất (.mp4)</option>' : ''}
         </select>
       `;
@@ -247,7 +250,7 @@ function renderAlbumTracks(tracks, isPlaylist) {
       </div>
       ${qualitySelectHtml}
     `;
-    
+
     // Đăng ký listener thay đổi checkbox bài hát con để cập nhật checkbox Chọn tất cả và số lượng hiển thị
     const cb = item.querySelector('.track-checkbox');
     if (cb) {
@@ -257,7 +260,7 @@ function renderAlbumTracks(tracks, isPlaylist) {
         if (selectAllTracks) {
           selectAllTracks.checked = allChecked;
         }
-        updateAlbumTracksCount();
+        updateAlbumTracksCount(tracks.length);
       });
     }
 
@@ -265,16 +268,21 @@ function renderAlbumTracks(tracks, isPlaylist) {
   });
 
   // Cập nhật số lượng hiển thị ban đầu
-  updateAlbumTracksCount();
+  updateAlbumTracksCount(tracks.length);
 }
 
 // Cập nhật số lượng bài hát đã được check
-function updateAlbumTracksCount() {
+function updateAlbumTracksCount(totalTracks) {
   if (!albumTracksList) return;
   const checkboxes = albumTracksList.querySelectorAll('.track-checkbox');
   const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+  const total = totalTracks || checkboxes.length;
   if (albumTracksCount) {
-    albumTracksCount.innerText = checkedCount;
+    if (checkedCount === total) {
+      albumTracksCount.innerText = total;
+    } else {
+      albumTracksCount.innerText = `${checkedCount} / ${total}`;
+    }
   }
 }
 
@@ -302,7 +310,7 @@ tabAudio.addEventListener('click', () => {
 // Bắt đầu tải xuống bài hát lẻ
 btnDownload.addEventListener('click', async () => {
   if (!analyzedData) return;
-  
+
   const formatId = formatSelect.value;
   const url = urlInput.value.trim();
   const title = analyzedData.title;
@@ -310,14 +318,14 @@ btnDownload.addEventListener('click', async () => {
   const isAudio = currentTab === 'audio';
 
   btnDownload.disabled = true;
-  
+
   try {
     let ref = currentReferer;
     if (!ref && url.startsWith('http')) {
       try {
         const u = new URL(url);
         ref = u.origin + '/';
-      } catch(e) {}
+      } catch (e) { }
     }
     const res = await window.electronAPI.startDownload({
       url,
@@ -332,6 +340,7 @@ btnDownload.addEventListener('click', async () => {
       await loadHistory();
       urlInput.value = '';
       analysisPanel.classList.add('hidden');
+      activateTab('nav-history');
     } else {
       alert('Không thể tải xuống: ' + res.error);
     }
@@ -388,8 +397,9 @@ btnDownloadAlbum.addEventListener('click', async () => {
     if (res.success) {
       setTimeout(async () => {
         await loadHistory();
+        activateTab('nav-history');
       }, 1000);
-      
+
       urlInput.value = '';
       analysisPanel.classList.add('hidden');
     } else {
@@ -416,7 +426,7 @@ async function loadHistory() {
 // Render danh sách lịch sử tải
 function renderHistory(history) {
   historyList.innerHTML = '';
-  
+
   if (history.length === 0) {
     historyList.innerHTML = `
       <div class="empty-history">
@@ -466,7 +476,7 @@ function renderHistory(history) {
         </div>
 
         <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
-          <button class="group-details-toggle" data-target="${item.id}">
+          <button class="group-details-toggle ${expandedGroupIds.has(item.id) ? 'expanded' : ''}" data-target="${item.id}">
             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
             <span>Chi tiết bài hát</span>
           </button>
@@ -476,13 +486,13 @@ function renderHistory(history) {
           </div>
         </div>
 
-        <div class="group-sub-list" id="sub-list-${item.id}">
+        <div class="group-sub-list ${expandedGroupIds.has(item.id) ? 'show' : ''}" id="sub-list-${item.id}">
           ${item.subItems.map(sub => {
-            let subPbClass = '';
-            if (sub.status === 'completed') subPbClass = 'completed';
-            if (sub.status === 'error') subPbClass = 'error';
-            const subLabel = sub.status === 'completed' ? 'Xong' : (sub.status === 'downloading' ? `${sub.progress}% (${sub.speed})` : getStatusLabel(sub.status));
-            return `
+        let subPbClass = '';
+        if (sub.status === 'completed') subPbClass = 'completed';
+        if (sub.status === 'error') subPbClass = 'error';
+        const subLabel = sub.status === 'completed' ? 'Xong' : (sub.status === 'downloading' ? `${sub.progress}% (${sub.speed})` : getStatusLabel(sub.status));
+        return `
               <div class="sub-track-item" id="sub-item-${sub.id}">
                 <div class="sub-track-top">
                   <span class="sub-track-title" title="${sub.title}">${sub.title}</span>
@@ -493,7 +503,7 @@ function renderHistory(history) {
                 </div>
               </div>
             `;
-          }).join('')}
+      }).join('')}
         </div>
       `;
 
@@ -508,9 +518,11 @@ function renderHistory(history) {
             if (isShow) {
               subList.classList.remove('show');
               toggleBtn.classList.remove('expanded');
+              expandedGroupIds.delete(item.id);
             } else {
               subList.classList.add('show');
               toggleBtn.classList.add('expanded');
+              expandedGroupIds.add(item.id);
             }
           }
         });
@@ -712,7 +724,7 @@ window.electronAPI.onDownloadProgress((data) => {
         if (subStatus) {
           subStatus.innerText = sub.status === 'completed' ? 'Xong' : (sub.status === 'downloading' ? `${sub.progress}% (${sub.speed})` : getStatusLabel(sub.status));
         }
-        
+
         const subPb = subEl.querySelector('.sub-track-progress');
         if (subPb) {
           subPb.style.width = `${sub.progress}%`;
@@ -741,12 +753,12 @@ if (window.electronAPI.onExternalLinkReceived) {
     if (data && data.url) {
       urlInput.value = data.url;
       currentReferer = data.pageUrl || '';
-      
+
       // Tự động chuyển về trang chủ
       if (navHome) {
         navHome.click();
       }
-      
+
       // Kiểm tra autoAnalyze từ settings để tự động Phân tích
       if (appSettings && appSettings.autoAnalyze !== false) {
         analyzeUrl();
@@ -761,37 +773,55 @@ if (window.electronAPI.onExternalLinkReceived) {
 
 // Tab Elements
 const navHome = document.getElementById('nav-home');
+const navHistory = document.getElementById('nav-history');
+const navFailed = document.getElementById('nav-failed');
 const navExtension = document.getElementById('nav-extension');
 const navGuide = document.getElementById('nav-guide');
 const navSettings = document.getElementById('nav-settings');
 
 const sectionHome = document.getElementById('section-home');
+const sectionHistory = document.getElementById('section-history');
+const sectionFailed = document.getElementById('section-failed');
 const sectionExtension = document.getElementById('section-extension');
 const sectionGuide = document.getElementById('section-guide');
 const sectionSettings = document.getElementById('section-settings');
 
 const tabsList = [
   { button: navHome, section: sectionHome },
+  { button: navHistory, section: sectionHistory },
+  { button: navFailed, section: sectionFailed },
   { button: navExtension, section: sectionExtension },
   { button: navGuide, section: sectionGuide },
   { button: navSettings, section: sectionSettings }
 ];
 
 // Click chuyển tab
+function activateTab(tabId) {
+  const target = tabsList.find(t => t.button && t.button.id === tabId);
+  if (target) {
+    tabsList.forEach(t => {
+      if (t.button) t.button.classList.remove('active');
+      if (t.section) t.section.classList.add('hidden');
+    });
+    target.button.classList.add('active');
+    target.section.classList.remove('hidden');
+
+    // Nếu mở tab extension, tự động kiểm tra trạng thái kết nối
+    if (tabId === 'nav-extension') {
+      updateConnectionStatus();
+    }
+
+    // Nếu mở tab Lỗi Tải, nạp danh sách link lỗi
+    if (tabId === 'nav-failed') {
+      loadFailedLinks();
+    }
+  }
+}
+
 tabsList.forEach(item => {
   if (item.button && item.section) {
     item.button.addEventListener('click', () => {
-      tabsList.forEach(t => {
-        if (t.button) t.button.classList.remove('active');
-        if (t.section) t.section.classList.add('hidden');
-      });
-      item.button.classList.add('active');
-      item.section.classList.remove('hidden');
-      
-      // Nếu mở tab extension, tự động kiểm tra trạng thái kết nối
-      if (item.button.id === 'nav-extension') {
-        updateConnectionStatus();
-      }
+      activateTab(item.button.id);
     });
   }
 });
@@ -808,6 +838,9 @@ const settingAutoanalyze = document.getElementById('setting-autoanalyze');
 const settingAccentColor = document.getElementById('setting-accent-color');
 const accentColorHex = document.getElementById('accent-color-hex');
 const settingShowThumbnails = document.getElementById('setting-show-thumbnails');
+const settingCloseAction = document.getElementById('setting-close-action');
+const settingStartWithWindows = document.getElementById('setting-start-with-windows');
+const settingStartWithBrowser = document.getElementById('setting-start-with-browser');
 const settingsSaveIndicator = document.getElementById('settings-save-indicator');
 
 let appSettings = {};
@@ -828,7 +861,10 @@ async function loadAppSettings() {
       if (settingAccentColor) settingAccentColor.value = appSettings.accentColor || '#7c3aed';
       if (accentColorHex) accentColorHex.innerText = appSettings.accentColor || '#7c3aed';
       if (settingShowThumbnails) settingShowThumbnails.checked = appSettings.showThumbnails !== false;
-      
+      if (settingCloseAction) settingCloseAction.value = appSettings.closeAction || 'ask';
+      if (settingStartWithWindows) settingStartWithWindows.checked = !!appSettings.startWithWindows;
+      if (settingStartWithBrowser) settingStartWithBrowser.checked = !!appSettings.startWithBrowser;
+
       // Áp dụng màu giao diện
       applyAccentColor(appSettings.accentColor || '#7c3aed');
     }
@@ -841,19 +877,19 @@ async function loadAppSettings() {
 function applyAccentColor(hexColor) {
   if (!hexColor) return;
   document.documentElement.style.setProperty('--border-focus', `${hexColor}80`);
-  
+
   let customStyleEl = document.getElementById('custom-accent-styles');
   if (!customStyleEl) {
     customStyleEl = document.createElement('style');
     customStyleEl.id = 'custom-accent-styles';
     document.head.appendChild(customStyleEl);
   }
-  
+
   let thumbnailRule = '';
   if (appSettings && appSettings.showThumbnails === false) {
     thumbnailRule = '.history-thumb { display: none !important; }';
   }
-  
+
   customStyleEl.innerHTML = `
     .switch input:checked + .slider-round { background-color: ${hexColor} !important; }
     .nav-tab.active { background: linear-gradient(135deg, ${hexColor} 0%, #4f46e5 100%) !important; }
@@ -886,9 +922,13 @@ async function saveCurrentSettings() {
     autoFocus: settingAutofocus ? settingAutofocus.checked : true,
     autoAnalyze: settingAutoanalyze ? settingAutoanalyze.checked : true,
     accentColor: settingAccentColor ? settingAccentColor.value : '#7c3aed',
-    showThumbnails: settingShowThumbnails ? settingShowThumbnails.checked : true
+    showThumbnails: settingShowThumbnails ? settingShowThumbnails.checked : true,
+    closeAction: settingCloseAction ? settingCloseAction.value : 'ask',
+    minimizeToTray: settingCloseAction ? (settingCloseAction.value === 'tray') : false,
+    startWithWindows: settingStartWithWindows ? settingStartWithWindows.checked : false,
+    startWithBrowser: settingStartWithBrowser ? settingStartWithBrowser.checked : false,
   };
-  
+
   try {
     const saved = await window.electronAPI.saveSettings(current);
     if (saved) {
@@ -913,6 +953,17 @@ if (btnBrowseFolder) {
   });
 }
 
+
+// Lắng nghe cập nhật settings từ main process
+if (window.electronAPI.onSettingsUpdated) {
+  window.electronAPI.onSettingsUpdated((newSettings) => {
+    appSettings = newSettings;
+    if (settingCloseAction) settingCloseAction.value = newSettings.closeAction || 'ask';
+    if (settingStartWithWindows) settingStartWithWindows.checked = !!newSettings.startWithWindows;
+    if (settingStartWithBrowser) settingStartWithBrowser.checked = !!newSettings.startWithBrowser;
+  });
+}
+
 // Gán lắng nghe thay đổi tự động cho các control
 const settingControls = [
   settingCreateSubdir,
@@ -922,7 +973,10 @@ const settingControls = [
   settingAutofocus,
   settingAutoanalyze,
   settingAccentColor,
-  settingShowThumbnails
+  settingShowThumbnails,
+  settingCloseAction,
+  settingStartWithWindows,
+  settingStartWithBrowser,
 ];
 
 settingControls.forEach(ctrl => {
@@ -952,7 +1006,7 @@ if (btnCopyExtPath) {
     try {
       const ok = await window.electronAPI.copyExtensionPath();
       if (ok) {
-        alert('Đã copy đường dẫn tuyệt đối của thư mục Extension vào bộ nhớ tạm (clipboard) của bạn!\n\nBây giờ bạn chỉ cần:\n1. Mở trang quản lý tiện ích của trình duyệt (ví dụ: chrome://extensions/)\n2. Bật "Developer Mode" (Chế độ nhà phát triển)\n3. Chọn "Load unpacked" (Tải tiện ích đã giải nén) và dán (Ctrl+V) đường dẫn này vào.');
+        alert('Đã copy đường dẫn tuyệt đối của thư mục Extension vào clipboard!\n\nCách sử dụng đúng:\n1. Mở trang quản lý tiện ích (ví dụ: chrome://extensions/)\n2. Bật "Developer Mode"\n3. Chọn "Load unpacked" → Mở File Explorer ở bất kỳ đâu\n4. Click vào ô địa chỉ (Address Bar) của Explorer → Paste (Ctrl+V) đường dẫn đã copy → Enter\n5. Chọn thư mục vừa mở là xong!');
       }
     } catch (e) {
       alert('Lỗi: ' + e.message);
@@ -1026,20 +1080,39 @@ const checkerStatusDesc = document.getElementById('checker-status-desc');
 
 async function updateConnectionStatus() {
   if (!checkerStatusDot || !checkerStatusTitle || !checkerStatusDesc) return;
-  
+
   checkerStatusDot.className = 'status-dot-large warning';
   checkerStatusTitle.innerText = 'Đang kiểm tra...';
-  
+
   try {
     const status = await window.electronAPI.checkServerStatus();
+    const serverBanner = document.getElementById('server-status-banner');
+    const serverText = document.getElementById('server-status-text');
+
     if (status && status.running) {
       checkerStatusDot.className = 'status-dot-large active';
       checkerStatusTitle.innerText = 'Đã kết nối thành công!';
-      checkerStatusDesc.innerText = `Local server đang hoạt động tốt trên cổng ${status.port}.`;
+
+      if (status.port !== status.configuredPort) {
+        checkerStatusDesc.innerText = `Local server đang chạy trên cổng phụ ${status.port} (Cổng ${status.configuredPort} bị chiếm).`;
+        if (serverBanner && serverText) {
+          serverBanner.className = 'status-banner warning';
+          serverBanner.classList.remove('hidden');
+          serverText.innerText = `⚠️ Cổng mặc định ${status.configuredPort} bị chiếm dụng. Đã tự chuyển sang cổng ${status.port}. Hãy đổi cổng trong extension thành ${status.port}.`;
+        }
+      } else {
+        checkerStatusDesc.innerText = `Local server đang hoạt động tốt trên cổng ${status.port}.`;
+        if (serverBanner) serverBanner.classList.add('hidden');
+      }
     } else {
       checkerStatusDot.className = 'status-dot-large';
       checkerStatusTitle.innerText = 'Chưa kết nối';
       checkerStatusDesc.innerText = 'Local server không chạy hoặc cổng đã bị chiếm.';
+      if (serverBanner && serverText) {
+        serverBanner.className = 'status-banner error';
+        serverBanner.classList.remove('hidden');
+        serverText.innerText = '❌ Local server không hoạt động hoặc cổng đã bị chiếm dụng hoàn toàn!';
+      }
     }
   } catch (e) {
     checkerStatusDot.className = 'status-dot-large';
@@ -1050,6 +1123,217 @@ async function updateConnectionStatus() {
 
 if (btnRecheckConnection) {
   btnRecheckConnection.addEventListener('click', updateConnectionStatus);
+}
+
+// ==========================================================================
+// Quản lý liên kết lỗi (Failed Links Section)
+// ==========================================================================
+const failedListContainer = document.getElementById('failed-list');
+const btnExportFailed = document.getElementById('btn-export-failed');
+const btnClearFailed = document.getElementById('btn-clear-failed');
+
+async function loadFailedLinks() {
+  try {
+    const list = await window.electronAPI.getFailedLinks();
+    renderFailedLinks(list);
+  } catch (error) {
+    console.error('Không thể load danh sách link lỗi:', error);
+  }
+}
+
+function renderFailedLinks(list) {
+  if (!failedListContainer) return;
+  failedListContainer.innerHTML = '';
+
+  if (!list || list.length === 0) {
+    failedListContainer.innerHTML = `
+      <div class="empty-history">
+        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M8 12h8"></path>
+        </svg>
+        <p>Tuyệt vời! Không có lỗi tải xuống nào.</p>
+      </div>
+    `;
+    return;
+  }
+
+  list.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'history-item';
+    card.style.borderColor = 'rgba(244, 63, 94, 0.25)';
+    card.style.background = 'rgba(244, 63, 94, 0.02)';
+
+    card.innerHTML = `
+      <div class="history-item-top">
+        <div class="history-info">
+          <div class="history-title" title="${item.title}" style="color: #f43f5e; font-weight: 600;">${item.title}</div>
+          <div class="history-meta">
+            <span>${item.date.split(',')[0]}</span>
+            <span>•</span>
+            <span style="color: #e11d48; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px;" title="${item.error}">${item.error}</span>
+          </div>
+        </div>
+      </div>
+      <div style="font-size: 11px; background: rgba(0,0,0,0.2); padding: 6px 10px; border-radius: 6px; word-break: break-all; margin-top: 4px;">
+        <a href="#" class="failed-link-url" style="color: #38bdf8; text-decoration: underline; cursor: pointer; transition: color 0.2s;" title="Click để mở liên kết trong trình duyệt">${item.url}</a>
+      </div>
+      <div class="history-actions" style="margin-top: 8px;">
+        <button class="btn-icon btn-copy-link" title="Copy link" style="border-color: rgba(255,255,255,0.08);">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+        </button>
+        <button class="btn-icon btn-retry-link" title="Tải lại" style="border-color: rgba(16, 185, 129, 0.3); color: #10b981;">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+        </button>
+        <button class="btn-icon danger btn-delete-link" title="Xóa">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        </button>
+      </div>
+    `;
+
+    // Mở link bằng trình duyệt mặc định
+    const linkUrl = card.querySelector('.failed-link-url');
+    if (linkUrl) {
+      linkUrl.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.electronAPI.openExternalUrl(item.url);
+      });
+    }
+
+    // Copy link
+    const btnCopy = card.querySelector('.btn-copy-link');
+    if (btnCopy) {
+      btnCopy.addEventListener('click', () => {
+        navigator.clipboard.writeText(item.url);
+        alert('Đã copy liên kết vào bộ nhớ tạm!');
+      });
+    }
+
+    // Retry
+    const btnRetry = card.querySelector('.btn-retry-link');
+    if (btnRetry) {
+      btnRetry.addEventListener('click', async () => {
+        urlInput.value = item.url;
+        activateTab('nav-home');
+        btnAnalyze.click();
+
+        await window.electronAPI.deleteFailedLink(item.id);
+        loadFailedLinks();
+      });
+    }
+
+    // Delete
+    const btnDelete = card.querySelector('.btn-delete-link');
+    if (btnDelete) {
+      btnDelete.addEventListener('click', async () => {
+        const updated = await window.electronAPI.deleteFailedLink(item.id);
+        renderFailedLinks(updated);
+      });
+    }
+
+    failedListContainer.appendChild(card);
+  });
+}
+
+if (btnClearFailed) {
+  btnClearFailed.addEventListener('click', async () => {
+    if (confirm('Bạn có chắc chắn muốn xóa sạch danh sách liên kết lỗi?')) {
+      const updated = await window.electronAPI.clearFailedLinks();
+      renderFailedLinks(updated);
+    }
+  });
+}
+
+if (btnExportFailed) {
+  btnExportFailed.addEventListener('click', async () => {
+    const res = await window.electronAPI.exportFailedLinks();
+    if (res.success) {
+      alert(`Xuất file log thành công tại:\n${res.filePath}`);
+    } else if (res.error) {
+      alert('Không thể xuất file: ' + res.error);
+    }
+  });
+}
+
+if (window.electronAPI.onFailedLinksUpdated) {
+  window.electronAPI.onFailedLinksUpdated((list) => {
+    renderFailedLinks(list);
+  });
+}
+
+if (window.electronAPI.onCookieSynced) {
+  window.electronAPI.onCookieSynced((data) => {
+    const type = data.auto ? 'tự động' : 'thủ công';
+    showToast(`Đã đồng bộ cookie ${data.domain} từ Extension (${type})!`, 'success');
+  });
+}
+
+if (window.electronAPI.onServerError) {
+  window.electronAPI.onServerError((message) => {
+    const serverBanner = document.getElementById('server-status-banner');
+    const serverText = document.getElementById('server-status-text');
+    if (serverBanner && serverText) {
+      serverBanner.className = 'status-banner error';
+      serverBanner.classList.remove('hidden');
+      serverText.innerText = `❌ Lỗi Local Server: ${message}`;
+    }
+  });
+}
+
+if (window.electronAPI.onServerStatus) {
+  window.electronAPI.onServerStatus((status) => {
+    const serverBanner = document.getElementById('server-status-banner');
+    const serverText = document.getElementById('server-status-text');
+    if (serverBanner && serverText) {
+      if (status.port !== status.configuredPort) {
+        serverBanner.className = 'status-banner warning';
+        serverBanner.classList.remove('hidden');
+        serverText.innerText = `⚠️ Cổng mặc định ${status.configuredPort} bị chiếm dụng. Đã tự chuyển sang cổng ${status.port}. Hãy đổi cổng trong extension thành ${status.port}.`;
+      } else {
+        serverBanner.classList.add('hidden');
+      }
+    }
+    updateConnectionStatus();
+  });
+}
+
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.style.position = 'fixed';
+  toast.style.bottom = '24px';
+  toast.style.right = '24px';
+  toast.style.background = 'rgba(30, 30, 46, 0.9)';
+  toast.style.color = type === 'success' ? '#a6e3a1' : '#f38ba8';
+  toast.style.padding = '10px 20px';
+  toast.style.borderRadius = '10px';
+  toast.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+  toast.style.fontSize = '12px';
+  toast.style.fontWeight = 'bold';
+  toast.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.4)';
+  toast.style.zIndex = '99999';
+  toast.style.opacity = '0';
+  toast.style.transition = 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+  toast.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+  toast.style.borderLeft = type === 'success' ? '4px solid #a6e3a1' : '4px solid #f38ba8';
+  toast.style.backdropFilter = 'blur(10px)';
+  toast.style.pointerEvents = 'none';
+  toast.style.transform = 'translateY(20px)';
+
+  toast.innerText = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+  }, 50);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      toast.remove();
+    }, 300);
+  }, 3500);
 }
 
 // Khởi chạy load ban đầu

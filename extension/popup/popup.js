@@ -3,6 +3,7 @@ const linksListEl = document.getElementById('links-list');
 const linksCountEl = document.getElementById('links-count');
 const statusIndicator = document.getElementById('connection-status');
 const btnRefresh = document.getElementById('btn-refresh');
+const btnSyncCookie = document.getElementById('btn-sync-cookie');
 
 let currentTab = null;
 const SERVER_URL = 'http://localhost:7788/receive-link';
@@ -51,15 +52,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-btnRefresh.addEventListener('click', async () => {
-  await initPopup();
-});
+if (btnRefresh) {
+  btnRefresh.addEventListener('click', async () => {
+    await initPopup();
+  });
+}
+
+if (btnSyncCookie) {
+  btnSyncCookie.addEventListener('click', syncCookieWithApp);
+}
 
 // Lắng nghe tin nhắn cập nhật realtime từ background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'links-updated' && currentTab && request.tabId === currentTab.id) {
     console.log('Nhận cập nhật realtime danh sách link:', request.links);
-    
+
     chrome.tabs.get(currentTab.id, (tab) => {
       if (tab) {
         pageTitleEl.innerText = tab.title || 'Không rõ tiêu đề';
@@ -77,14 +84,14 @@ function isMajorPlatformVideo(url) {
     const parsed = new URL(url);
     const hostname = parsed.hostname;
     const pathname = parsed.pathname;
-    
+
     // 1. YouTube
     if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
       if (parsed.searchParams.has('v')) return true;
       if (pathname.includes('/shorts/') || pathname.includes('/live/') || pathname.includes('/v/') || pathname.includes('/embed/')) return true;
       return false;
     }
-    
+
     // 2. Facebook
     if (hostname.includes('facebook.com') || hostname.includes('fb.watch')) {
       if (pathname.includes('/watch') || pathname.includes('/reel/') || pathname.includes('/videos/') || pathname.includes('/posts/') || pathname.includes('story.php')) return true;
@@ -92,7 +99,7 @@ function isMajorPlatformVideo(url) {
       if (parsed.searchParams.has('v')) return true;
       return false;
     }
-    
+
     // 3. TikTok
     if (hostname.includes('tiktok.com')) {
       if (pathname.includes('/video/') || pathname.includes('/photo/')) return true;
@@ -104,8 +111,8 @@ function isMajorPlatformVideo(url) {
       if (pathname.includes('/track/') || pathname.includes('/album/') || pathname.includes('/playlist/')) return true;
       return false;
     }
-  } catch(e) {}
-  
+  } catch (e) { }
+
   return false;
 }
 
@@ -124,7 +131,7 @@ async function initPopup() {
     const tabId = currentTab.id;
     chrome.storage.local.get([`tab_${tabId}`], (result) => {
       let links = result[`tab_${tabId}`] || [];
-      
+
       // Nếu link trang hiện tại chưa có trong storage, tự động nạp nó ngay lập tức
       if (!links.some(l => l.url === currentTab.url)) {
         // MXH lớn/Spotify chỉ cần giữ duy nhất link gốc trang hiện tại để làm sạch rác
@@ -135,7 +142,7 @@ async function initPopup() {
           timestamp: Date.now()
         };
         links = [newLink]; // Đặt duy nhất link gốc này
-        
+
         const update = {};
         update[`tab_${tabId}`] = links;
         chrome.storage.local.set(update, () => {
@@ -145,7 +152,7 @@ async function initPopup() {
             action: 'update-badge',
             tabId: tabId,
             count: links.length
-          }).catch(() => {});
+          }).catch(() => { });
         });
       } else {
         renderLinks(links);
@@ -166,16 +173,16 @@ function checkAppConnection() {
     mode: 'cors',
     signal: controller.signal
   })
-  .then(() => {
-    clearTimeout(timeoutId);
-    statusIndicator.className = 'status-indicator connected';
-    statusIndicator.innerText = 'Đã kết nối App';
-  })
-  .catch((err) => {
-    clearTimeout(timeoutId);
-    statusIndicator.className = 'status-indicator disconnected';
-    statusIndicator.innerText = err.name === 'AbortError' ? 'App không phản hồi' : 'Chưa bật App';
-  });
+    .then(() => {
+      clearTimeout(timeoutId);
+      statusIndicator.className = 'status-indicator connected';
+      statusIndicator.innerText = 'Đã kết nối App';
+    })
+    .catch((err) => {
+      clearTimeout(timeoutId);
+      statusIndicator.className = 'status-indicator disconnected';
+      statusIndicator.innerText = err.name === 'AbortError' ? 'App không phản hồi' : 'Chưa bật App';
+    });
 }
 
 // Load danh sách link từ chrome storage
@@ -214,7 +221,7 @@ function renderLinks(links) {
 
     const ext = getExtensionFromUrl(item.url);
     const typeLabel = getTypeLabel(ext, item.url, item.contentType);
-    
+
     // Tạo tên tệp mặc định sạch đẹp để chỉnh sửa nhanh
     let defaultFileName = item.name || 'video_media';
     if (defaultFileName.includes('.')) {
@@ -275,16 +282,26 @@ function showNotification(message) {
 }
 
 // Gửi link sang Desktop App qua HTTP POST (3 giây timeout để tránh treo UI)
-function sendLinkToApp(url, customTitle) {
+async function sendLinkToApp(url, customTitle) {
+  let cookies = [];
+  try {
+    if (currentTab && currentTab.url && !currentTab.url.startsWith('chrome://') && !currentTab.url.startsWith('about:')) {
+      cookies = await chrome.cookies.getAll({ url: currentTab.url });
+    }
+  } catch (err) {
+    console.warn('Lỗi lấy cookie cho link tải:', err.message);
+  }
+
   const payload = {
     url: url,
     pageUrl: currentTab.url,
     pageTitle: customTitle || currentTab.title,
-    thumbnail: currentTab.favIconUrl || ''
+    thumbnail: currentTab.favIconUrl || '',
+    cookies: cookies
   };
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 3000);
+  const timeoutId = setTimeout(() => controller.abort(), 4000); // Tăng lên 4 giây để có thêm thời gian xử lý cookie
 
   fetch(SERVER_URL, {
     method: 'POST',
@@ -293,25 +310,95 @@ function sendLinkToApp(url, customTitle) {
     signal: controller.signal,
     body: JSON.stringify(payload)
   })
-  .then(response => {
+    .then(response => {
+      clearTimeout(timeoutId);
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        showNotification('Đã gửi link kèm cookie sang MediaFetch Desktop App!');
+      } else {
+        showNotification('Gửi thất bại: ' + data.error);
+      }
+    })
+    .catch(err => {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        showNotification('Hết thời gian chờ! Hãy chắc Desktop App đang mở.');
+      } else {
+        showNotification('Lỗi kết nối! Hãy chắc chắn Desktop App đang mở.');
+      }
+    });
+}
+
+// Gửi cookie thủ công của tab hiện tại sang Desktop App
+async function syncCookieWithApp() {
+  if (!chrome.cookies) {
+    showNotification('Thiếu quyền cookies! Vui lòng nạp lại (Reload) Extension.');
+    return;
+  }
+
+  if (!currentTab || !currentTab.url) {
+    showNotification('Không xác định được trang hiện tại!');
+    return;
+  }
+
+  if (currentTab.url.startsWith('chrome://') || currentTab.url.startsWith('edge://') || currentTab.url.startsWith('about:')) {
+    showNotification('Không thể lấy cookie của trang hệ thống!');
+    return;
+  }
+
+  btnSyncCookie.classList.add('syncing');
+  btnSyncCookie.disabled = true;
+  btnSyncCookie.innerHTML = `
+    <svg class="sync-cookie-icon" viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line>
+      <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+      <line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line>
+      <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+    </svg>
+    <span>Đang đồng bộ...</span>
+  `;
+
+  try {
+    const cookies = await chrome.cookies.getAll({ url: currentTab.url });
+    const payload = {
+      pageUrl: currentTab.url,
+      cookies: cookies
+    };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+    const response = await fetch('http://localhost:7788/receive-cookie', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      mode: 'cors',
+      signal: controller.signal,
+      body: JSON.stringify(payload)
+    });
+
     clearTimeout(timeoutId);
-    return response.json();
-  })
-  .then(data => {
+    const data = await response.json();
+
     if (data.success) {
-      showNotification('Đã gửi link sang MediaFetch Desktop App!');
+      showNotification('Đã đồng bộ cookie của trang sang Desktop App!');
     } else {
-      showNotification('Gửi thất bại: ' + data.error);
+      showNotification('Đồng bộ thất bại: ' + data.error);
     }
-  })
-  .catch(err => {
-    clearTimeout(timeoutId);
-    if (err.name === 'AbortError') {
-      showNotification('Hết thời gian chờ! Hãy chắc Desktop App đang mở.');
-    } else {
-      showNotification('Lỗi kết nối! Hãy chắc chắn Desktop App đang mở.');
-    }
-  });
+  } catch (err) {
+    console.error('Lỗi đồng bộ cookie:', err);
+    showNotification('Lỗi kết nối! Hãy chắc chắn Desktop App đang mở.');
+  } finally {
+    btnSyncCookie.classList.remove('syncing');
+    btnSyncCookie.disabled = false;
+    btnSyncCookie.innerHTML = `
+      <svg class="sync-cookie-icon" viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+      </svg>
+      <span>Đồng bộ Cookie</span>
+    `;
+  }
 }
 
 // Helper lấy đuôi file từ URL
@@ -322,7 +409,7 @@ function getExtensionFromUrl(url) {
     if (parts.length > 1) {
       return parts.pop().toLowerCase();
     }
-  } catch (e) {}
+  } catch (e) { }
   return '';
 }
 
@@ -344,7 +431,7 @@ function getTypeLabel(ext, url, contentType) {
     if (contentType.includes('audio/')) return 'Audio (' + contentType.split('/')[1].toUpperCase() + ')';
     if (contentType.includes('video/')) return 'Video (' + contentType.split('/')[1].toUpperCase() + ')';
   }
-  
+
   switch (ext) {
     case 'm3u8': return 'HLS (m3u8)';
     case 'mpd': return 'DASH (mpd)';
